@@ -10,7 +10,7 @@ use PDO;
 
 class Database extends Frontend\Database
 {
-    public function tables(): iterable
+    public function tables(): \Traversable
     {
         $tables =
             $this->getDatabaseConnection()

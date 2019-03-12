@@ -19,7 +19,7 @@ abstract class Database implements Visitor\Element
         $this->name                = $name;
     }
 
-    abstract public function tables(): iterable;
+    abstract public function tables(): \Traversable;
 
     public function getDatabaseConnection(): Dal
     {

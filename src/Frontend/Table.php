@@ -22,7 +22,7 @@ abstract class Table implements Visitor\Element
         $this->_databaseConnection = $databaseConnection;
     }
 
-    abstract public function columns(): iterable;
+    abstract public function columns(): \Traversable;
 
     public function getDatabaseConnection(): Dal
     {
