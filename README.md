@@ -85,7 +85,7 @@ This will generate separate files for:
 * the definition of a table
   * filename: `table__[database]__[table].iuml` (include-file)
 * its relations
-  * filename: `relations__[database]__[table].iuml` (include-file)
+  * filename: `relations__[database]__[table]__[referenced_table].iuml` (include-file)
 * complete table definition
   * filename: `table__[database]__[table].puml`
 
