@@ -24,6 +24,7 @@ class PlantUMLSingleFile implements Visitor\Visit
     protected $databaseName;
 
     protected $definitions = '@startuml' . "\n\n" .
+        '!ifdef !table' . "\n" .
         '!define table(x) class x << (T,#ffebf3) >>' . "\n" .
         'hide methods' . "\n" .
         'hide stereotypes' . "\n" .
@@ -32,6 +33,7 @@ class PlantUMLSingleFile implements Visitor\Visit
         'skinparam classBorderColor #ff0066' . "\n" .
         'skinparam classBackgroundColor ##f6f4ee' . "\n" .
         'skinparam shadowing false' . "\n" .
+        '!endif' . "\n" .
         "\n";
 
     protected $fileBanner = "@startuml\n\n!include definitions.iuml\n\n";
@@ -58,7 +60,7 @@ class PlantUMLSingleFile implements Visitor\Visit
         $out = $this->fileBanner . "\n";
 
         foreach ($database->tables() as $table) {
-            $out .= $table->accept($this, $handle, $eldnah) . "\n";
+            $out .= '!include '.$table->accept($this, $handle, $eldnah) . "\n";
         }
 
         $out .= '@enduml';
@@ -69,6 +71,8 @@ class PlantUMLSingleFile implements Visitor\Visit
     public function visitTable(Frontend\Table $table, &$handle = null, &$eldnah = null): string
     {
         $out = $this->fileBanner."\n";
+
+        $out.= '!ifdef !table_' . $table->name. "\n\n";
         $out .= 'table(' . $table->name . ') {' . "\n";
         $connections = [];
 
@@ -109,7 +113,7 @@ class PlantUMLSingleFile implements Visitor\Visit
             }
         }
 
-        $out .= "\n}\n".$this->fileEnd."\n";
+        $out .= "\n}\n!endif\n".$this->fileEnd."\n";
 
         $out = $this->writeTablePumlFileWithIncludes($table, $out, $connections);
 
@@ -128,7 +132,7 @@ class PlantUMLSingleFile implements Visitor\Visit
         $tableDefinitionFile = $this->saveTableDefinition($out, $table->name);
         $tableConnectionsFiles = $this->saveTableConnections($connections, $table->name);
 
-        $filename = sprintf(
+        $tablePumlFile = sprintf(
             'table__%s__%s.puml',
             $this->databaseName,
             $table->name
@@ -152,9 +156,9 @@ class PlantUMLSingleFile implements Visitor\Visit
 
         $out.= $this->fileEnd;
 
-        file_put_contents($filename, $out);
+        file_put_contents($tablePumlFile, $out);
 
-        return $filename;
+        return $tablePumlFile;
     }
 
     protected function saveTableDefinition(string $tableDefinitionString, string $tableName) : string
@@ -175,22 +179,50 @@ class PlantUMLSingleFile implements Visitor\Visit
             return [];
         }
 
-        $filenames = [];
+        $relationFilenames = [];
 
-        foreach ($connections as $referencedTable => $comment)
-        {
-            $filename = sprintf(
-                'relations__%s__%s__%s.iuml',
+        foreach ($connections as $referencedTable => $comment) {
+            $relationName = sprintf(
+                'relations__%s__%s__%s',
                 $this->databaseName,
                 $tableName,
                 $referencedTable
             );
-            $connectionsString = $tableName . ' --> '.$referencedTable . ' : '.$comment;
+            $relationFilename = $relationName.'.iuml';
 
-            file_put_contents($filename, '@startuml' . "\n\n" .$connectionsString."\n@enduml\n");
-            $filenames[] = $filename;
+            $relationFileContent = $this->buildTableConnectionPlantUMLstringWithGuardStatement(
+                $tableName,
+                $referencedTable,
+                $comment,
+                $relationName
+            );
+
+            file_put_contents($relationFilename, $relationFileContent);
+
+            $relationFilenames[] = $relationFilename;
         }
 
-        return $filenames;
+        return $relationFilenames;
+    }
+
+    /**
+     * @param string $tableName
+     * @param string $referencedTable
+     * @param string $comment
+     * @param string $relationName
+     * @return string
+     */
+    protected function buildTableConnectionPlantUMLstringWithGuardStatement(
+        string $tableName,
+        string $referencedTable,
+        string $comment,
+        string $relationName
+    ) : string
+    {
+        $connectionsString = $tableName . ' --> ' . $referencedTable . ' : ' . $comment;
+        $relationFileContent = "@startuml\n\n!ifdef !$relationName\n\n";
+        $relationFileContent .= $connectionsString;
+        $relationFileContent .= "\n!endif\n@enduml\n";
+        return $relationFileContent;
     }
 }
