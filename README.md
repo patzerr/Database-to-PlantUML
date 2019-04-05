@@ -75,11 +75,7 @@ $ bin/database-to-plantuml -d 'mysql:dbname=employees' -u root -s employees | \
 Note: Outputs differ because the `employees` examples are not exactly
 the same. They are here to illustrate the tool only.
 
-# License
-
-BSD-3-License, but seriously, do what ever you want!
-
-# PlantUMLSingleFile
+# PlantUML but with Multiple Files
 
 This will generate separate files for:
 * the definition of a table
@@ -96,7 +92,11 @@ e.g. by putting tables into groups
 
 ## Usage
 
-
 ```sh
-$ bin/database-to-plantuml -d 'mysql:dbname=employees' -u root -s employees -b PlantUMLSingleFile
+$ bin/database-to-plantuml -d 'mysql:dbname=employees' -u root -s employees -b plantuml-multiple-files
 ```
+
+# License
+
+BSD-3-License, but seriously, do what ever you want!
+
